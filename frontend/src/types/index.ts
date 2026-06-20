@@ -29,3 +29,19 @@ export interface Preset {
   particleCount: number;
   initialConfig: 'dam' | 'drop' | 'fountain' | 'wave';
 }
+
+export interface RunSummary {
+  presetName: string;
+  presetLabel: string;
+  startTime: number;
+  endTime: number;
+  durationMs: number;
+  frameCount: number;
+  avgFps: number;
+  particleCount: number;
+  finalAvgDensity: number;
+  finalMaxVelocity: number;
+  peakMaxVelocity: number;
+  paramsSnapshot: SimParams;
+  savedAt: number;
+}

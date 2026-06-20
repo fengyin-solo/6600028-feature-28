@@ -40,6 +40,21 @@ function onParticleCount(e: Event) {
 function onDt(e: Event) {
   store.updateParam('dt', parseFloat((e.target as HTMLInputElement).value))
 }
+
+function formatDuration(ms: number): string {
+  if (ms < 1000) return `${ms.toFixed(0)}ms`
+  const sec = ms / 1000
+  if (sec < 60) return `${sec.toFixed(1)}s`
+  const min = Math.floor(sec / 60)
+  const remainSec = sec - min * 60
+  return `${min}m ${remainSec.toFixed(0)}s`
+}
+
+function formatTime(timestamp: number): string {
+  const d = new Date(timestamp)
+  const pad = (n: number) => n.toString().padStart(2, '0')
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
 </script>
 
 <template>
@@ -161,7 +176,7 @@ function onDt(e: Event) {
     </div>
 
     <!-- Stats -->
-    <div class="mt-auto pt-3 border-t border-gray-700">
+    <div>
       <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">运行状态</h3>
       <div class="grid grid-cols-2 gap-2 text-xs">
         <div class="bg-gray-900 rounded px-2 py-1.5">
@@ -180,6 +195,65 @@ function onDt(e: Event) {
           <span class="text-gray-500">最大速度</span>
           <p class="text-red-400 font-mono text-sm">{{ store.maxVelocity.toFixed(1) }}</p>
         </div>
+      </div>
+    </div>
+
+    <!-- Last Run Summary -->
+    <div class="mt-auto pt-3 border-t border-gray-700">
+      <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+        <span>最近一次运行摘要</span>
+        <span v-if="store.lastRunSummary" class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+      </h3>
+      <div v-if="store.lastRunSummary" class="space-y-2 text-xs">
+        <div class="flex justify-between items-center">
+          <span class="text-gray-500">预设场景</span>
+          <span class="text-purple-400 font-medium">{{ store.lastRunSummary.presetLabel }}</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-gray-500">保存时间</span>
+          <span class="text-gray-300 font-mono">{{ formatTime(store.lastRunSummary.savedAt) }}</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-gray-500">运行时长</span>
+          <span class="text-gray-300 font-mono">{{ formatDuration(store.lastRunSummary.durationMs) }}</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-gray-500">帧数</span>
+          <span class="text-gray-300 font-mono">{{ store.lastRunSummary.frameCount }}</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-gray-500">平均 FPS</span>
+          <span class="text-green-400 font-mono">{{ store.lastRunSummary.avgFps }}</span>
+        </div>
+        <div class="grid grid-cols-2 gap-2 pt-1 border-t border-gray-700">
+          <div class="bg-gray-900 rounded px-2 py-1.5">
+            <span class="text-gray-500">终止密度</span>
+            <p class="text-yellow-400 font-mono text-sm">{{ store.lastRunSummary.finalAvgDensity.toFixed(0) }}</p>
+          </div>
+          <div class="bg-gray-900 rounded px-2 py-1.5">
+            <span class="text-gray-500">终止速度</span>
+            <p class="text-red-400 font-mono text-sm">{{ store.lastRunSummary.finalMaxVelocity.toFixed(1) }}</p>
+          </div>
+          <div class="bg-gray-900 rounded px-2 py-1.5 col-span-2">
+            <span class="text-gray-500">峰值速度</span>
+            <p class="text-orange-400 font-mono text-sm">{{ store.lastRunSummary.peakMaxVelocity.toFixed(1) }}</p>
+          </div>
+        </div>
+        <details class="cursor-pointer">
+          <summary class="text-gray-500 hover:text-gray-300 transition select-none">参数快照</summary>
+          <div class="mt-2 space-y-1 bg-gray-900 rounded p-2 font-mono">
+            <div class="flex justify-between"><span class="text-gray-500">gravity</span><span class="text-gray-300">{{ store.lastRunSummary.paramsSnapshot.gravity.toFixed(1) }}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">viscosity</span><span class="text-gray-300">{{ store.lastRunSummary.paramsSnapshot.viscosity.toFixed(1) }}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">smoothing</span><span class="text-gray-300">{{ store.lastRunSummary.paramsSnapshot.smoothingRadius.toFixed(0) }}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">dt</span><span class="text-gray-300">{{ store.lastRunSummary.paramsSnapshot.dt.toFixed(4) }}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">restDensity</span><span class="text-gray-300">{{ store.lastRunSummary.paramsSnapshot.restDensity }}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">gasConst</span><span class="text-gray-300">{{ store.lastRunSummary.paramsSnapshot.gasConstant }}</span></div>
+          </div>
+        </details>
+      </div>
+      <div v-else class="text-xs text-gray-600 italic py-4 text-center">
+        暂无运行记录<br>
+        <span class="text-gray-700">开始→停止或重置后将保存摘要</span>
       </div>
     </div>
   </div>

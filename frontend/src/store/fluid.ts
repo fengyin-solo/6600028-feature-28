@@ -36,14 +36,41 @@ export const useFluidStore = defineStore('fluid', {
     },
   },
   actions: {
+    _validateRunSummary(data: unknown): data is RunSummary {
+      if (!data || typeof data !== 'object') return false
+      const obj = data as Record<string, unknown>
+      const hasParams = !!obj.paramsSnapshot && typeof obj.paramsSnapshot === 'object'
+      return (
+        typeof obj.presetName === 'string' &&
+        typeof obj.presetLabel === 'string' &&
+        typeof obj.startTime === 'number' &&
+        typeof obj.endTime === 'number' &&
+        typeof obj.durationMs === 'number' &&
+        typeof obj.frameCount === 'number' &&
+        typeof obj.avgFps === 'number' &&
+        typeof obj.particleCount === 'number' &&
+        typeof obj.finalAvgDensity === 'number' &&
+        typeof obj.finalMaxVelocity === 'number' &&
+        typeof obj.peakMaxVelocity === 'number' &&
+        typeof obj.savedAt === 'number' &&
+        hasParams
+      )
+    },
     _loadLastRunSummary() {
       try {
         const raw = localStorage.getItem(SUMMARY_STORAGE_KEY)
         if (raw) {
-          this.lastRunSummary = JSON.parse(raw) as RunSummary
+          const parsed = JSON.parse(raw)
+          if (this._validateRunSummary(parsed)) {
+            this.lastRunSummary = parsed as RunSummary
+          } else {
+            this.lastRunSummary = null
+            localStorage.removeItem(SUMMARY_STORAGE_KEY)
+          }
         }
       } catch (e) {
         this.lastRunSummary = null
+        try { localStorage.removeItem(SUMMARY_STORAGE_KEY) } catch (_) { /* ignore */ }
       }
     },
     _saveRunSummary() {
@@ -172,7 +199,7 @@ export const useFluidStore = defineStore('fluid', {
       if (this.engine) {
         this.engine.params[key] = value
         if (key === 'smoothingRadius') {
-          this.engine['cellSize'] = value
+          (this.engine as unknown as { cellSize: number }).cellSize = value
         }
       }
     },

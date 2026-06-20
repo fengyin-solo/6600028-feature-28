@@ -41,7 +41,8 @@ function onDt(e: Event) {
   store.updateParam('dt', parseFloat((e.target as HTMLInputElement).value))
 }
 
-function formatDuration(ms: number): string {
+function formatDuration(ms: number | undefined | null): string {
+  if (typeof ms !== 'number' || isNaN(ms)) return '-'
   if (ms < 1000) return `${ms.toFixed(0)}ms`
   const sec = ms / 1000
   if (sec < 60) return `${sec.toFixed(1)}s`
@@ -50,10 +51,16 @@ function formatDuration(ms: number): string {
   return `${min}m ${remainSec.toFixed(0)}s`
 }
 
-function formatTime(timestamp: number): string {
+function formatTime(timestamp: number | undefined | null): string {
+  if (typeof timestamp !== 'number' || isNaN(timestamp)) return '-'
   const d = new Date(timestamp)
   const pad = (n: number) => n.toString().padStart(2, '0')
   return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+
+function safeToFixed(val: number | undefined | null, digits: number): string {
+  if (typeof val !== 'number' || isNaN(val)) return '-'
+  return val.toFixed(digits)
 }
 </script>
 
@@ -207,47 +214,47 @@ function formatTime(timestamp: number): string {
       <div v-if="store.lastRunSummary" class="space-y-2 text-xs">
         <div class="flex justify-between items-center">
           <span class="text-gray-500">预设场景</span>
-          <span class="text-purple-400 font-medium">{{ store.lastRunSummary.presetLabel }}</span>
+          <span class="text-purple-400 font-medium">{{ store.lastRunSummary?.presetLabel ?? '-' }}</span>
         </div>
         <div class="flex justify-between items-center">
           <span class="text-gray-500">保存时间</span>
-          <span class="text-gray-300 font-mono">{{ formatTime(store.lastRunSummary.savedAt) }}</span>
+          <span class="text-gray-300 font-mono">{{ formatTime(store.lastRunSummary?.savedAt) }}</span>
         </div>
         <div class="flex justify-between items-center">
           <span class="text-gray-500">运行时长</span>
-          <span class="text-gray-300 font-mono">{{ formatDuration(store.lastRunSummary.durationMs) }}</span>
+          <span class="text-gray-300 font-mono">{{ formatDuration(store.lastRunSummary?.durationMs) }}</span>
         </div>
         <div class="flex justify-between items-center">
           <span class="text-gray-500">帧数</span>
-          <span class="text-gray-300 font-mono">{{ store.lastRunSummary.frameCount }}</span>
+          <span class="text-gray-300 font-mono">{{ store.lastRunSummary?.frameCount ?? '-' }}</span>
         </div>
         <div class="flex justify-between items-center">
           <span class="text-gray-500">平均 FPS</span>
-          <span class="text-green-400 font-mono">{{ store.lastRunSummary.avgFps }}</span>
+          <span class="text-green-400 font-mono">{{ store.lastRunSummary?.avgFps ?? '-' }}</span>
         </div>
         <div class="grid grid-cols-2 gap-2 pt-1 border-t border-gray-700">
           <div class="bg-gray-900 rounded px-2 py-1.5">
             <span class="text-gray-500">终止密度</span>
-            <p class="text-yellow-400 font-mono text-sm">{{ store.lastRunSummary.finalAvgDensity.toFixed(0) }}</p>
+            <p class="text-yellow-400 font-mono text-sm">{{ safeToFixed(store.lastRunSummary?.finalAvgDensity, 0) }}</p>
           </div>
           <div class="bg-gray-900 rounded px-2 py-1.5">
             <span class="text-gray-500">终止速度</span>
-            <p class="text-red-400 font-mono text-sm">{{ store.lastRunSummary.finalMaxVelocity.toFixed(1) }}</p>
+            <p class="text-red-400 font-mono text-sm">{{ safeToFixed(store.lastRunSummary?.finalMaxVelocity, 1) }}</p>
           </div>
           <div class="bg-gray-900 rounded px-2 py-1.5 col-span-2">
             <span class="text-gray-500">峰值速度</span>
-            <p class="text-orange-400 font-mono text-sm">{{ store.lastRunSummary.peakMaxVelocity.toFixed(1) }}</p>
+            <p class="text-orange-400 font-mono text-sm">{{ safeToFixed(store.lastRunSummary?.peakMaxVelocity, 1) }}</p>
           </div>
         </div>
         <details class="cursor-pointer">
           <summary class="text-gray-500 hover:text-gray-300 transition select-none">参数快照</summary>
           <div class="mt-2 space-y-1 bg-gray-900 rounded p-2 font-mono">
-            <div class="flex justify-between"><span class="text-gray-500">gravity</span><span class="text-gray-300">{{ store.lastRunSummary.paramsSnapshot.gravity.toFixed(1) }}</span></div>
-            <div class="flex justify-between"><span class="text-gray-500">viscosity</span><span class="text-gray-300">{{ store.lastRunSummary.paramsSnapshot.viscosity.toFixed(1) }}</span></div>
-            <div class="flex justify-between"><span class="text-gray-500">smoothing</span><span class="text-gray-300">{{ store.lastRunSummary.paramsSnapshot.smoothingRadius.toFixed(0) }}</span></div>
-            <div class="flex justify-between"><span class="text-gray-500">dt</span><span class="text-gray-300">{{ store.lastRunSummary.paramsSnapshot.dt.toFixed(4) }}</span></div>
-            <div class="flex justify-between"><span class="text-gray-500">restDensity</span><span class="text-gray-300">{{ store.lastRunSummary.paramsSnapshot.restDensity }}</span></div>
-            <div class="flex justify-between"><span class="text-gray-500">gasConst</span><span class="text-gray-300">{{ store.lastRunSummary.paramsSnapshot.gasConstant }}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">gravity</span><span class="text-gray-300">{{ safeToFixed(store.lastRunSummary?.paramsSnapshot?.gravity, 1) }}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">viscosity</span><span class="text-gray-300">{{ safeToFixed(store.lastRunSummary?.paramsSnapshot?.viscosity, 1) }}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">smoothing</span><span class="text-gray-300">{{ safeToFixed(store.lastRunSummary?.paramsSnapshot?.smoothingRadius, 0) }}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">dt</span><span class="text-gray-300">{{ safeToFixed(store.lastRunSummary?.paramsSnapshot?.dt, 4) }}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">restDensity</span><span class="text-gray-300">{{ store.lastRunSummary?.paramsSnapshot?.restDensity ?? '-' }}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500">gasConst</span><span class="text-gray-300">{{ store.lastRunSummary?.paramsSnapshot?.gasConstant ?? '-' }}</span></div>
           </div>
         </details>
       </div>
